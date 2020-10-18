@@ -27,7 +27,7 @@ func BuscarUsuario(id int) {
 		fmt.Println("Erro ao criar GET request ", respError)
 		return
 	}
-	respoModel := Book{}
+	respoModel := []Book{}
 	error := json.Unmarshal(body, &respoModel)
 
 	if error != nil {
