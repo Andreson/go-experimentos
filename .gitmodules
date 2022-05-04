@@ -1,0 +1,3 @@
+[submodule "src/github.com/proxy"]
+	path = src/github.com/proxy
+	url = http://andresonp@hdixbbs1:7990/scm/hse/cor-int-sidecar-cache.git
