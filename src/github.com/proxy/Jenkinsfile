@@ -1,0 +1,50 @@
+#!groovy
+ 
+  pipeline {
+    agent { label 'java-builder-cache' }
+ 
+    environment {
+      // GCP
+      //PROJECT_NAME_API     = 'ins-cross-clusters-dev'
+      PROJECT_NAME_OPENAPI="ins-cross-integration-dev"
+      DOCKER_IMAGE_NAME = "gcr.io/infra-cross/cor-int-sidecar-cache"
+      GCP_CREDENTIAL    = credentials('spinnaker-deploy')
+  
+      // Docker image tag equals commit short hash
+      DOCKER_IMAGE_VERSION   = sh (script: 'git show --format="%H" --no-patch', returnStdout:true).trim()
+      BRANCH_IMAGE_TAG       = '$(echo $GIT_BRANCH |awk -F "/" "{print "\$"NF}")'
+
+    }
+
+    stages {
+ 
+
+ 
+      stage('Build Docker Image to GCR') {
+        when {
+          expression {
+            return fileExists('Dockerfile')
+          }
+        }
+        steps {
+          container('cloud-sdk-cache') {
+            echo 'Build Docker image and push to GCR'
+            script {
+              app = docker.build(DOCKER_IMAGE_NAME)
+
+              sh "gcloud auth activate-service-account --key-file=${GCP_CREDENTIAL}"
+              sh "gcloud config set project ${PROJECT_NAME_OPENAPI}"
+              sh 'gcloud auth configure-docker --quiet'
+              app.push("1.2.5.1")
+              app.push("${DOCKER_IMAGE_VERSION}")
+              app.push("build-${env.BUILD_NUMBER}")
+              app.push('1.2')
+              app.push('1-RC')
+              app.push('1.2.0')
+            }
+          }
+        }
+      }
+    }
+  }
+ 
